@@ -1,0 +1,28 @@
+{
+  "frame_number": 123,
+  "timestamp": 9876543210,
+  "objects": [
+    {
+      "class_id": 0,
+      "label": "car",
+      "confidence": 0.95,
+      "box": {
+        "x": 100.0,
+        "y": 50.0,
+        "w": 80.0,
+        "h": 60.0
+      }
+    },
+    {
+      "class_id": 2,
+      "label": "person",
+      "confidence": 0.88,
+      "box": {
+        "x": 200.0,
+        "y": 150.0,
+        "w": 30.0,
+        "h": 90.0
+      }
+    }
+  ]
+}

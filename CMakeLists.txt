@@ -75,8 +75,12 @@ target_include_directories(vision_backend
         ${ZMQ_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${GST_INCLUDE_DIRS}
+        /opt/nvidia/deepstream/deepstream/sources/includes
 )
 
+target_link_directories(vision_backend PRIVATE
+    /opt/nvidia/deepstream/deepstream/lib
+)
 
 target_link_libraries(vision_backend
     PRIVATE
@@ -91,12 +95,9 @@ target_link_libraries(vision_backend
         ${GST_APP_LIBRARIES}
         ${DS_ROOT}/lib/libnvdsgst_meta.so
         ${DS_ROOT}/lib/libnvds_meta.so
+        nvdsgst_meta
+        nvds_meta
 )
-
-  #   nvdsgst_meta
-     #     nvds_meta
-      #    nvbufsurface
-
 
 # === 설치 규칙 추가 ===
 # 실행파일
