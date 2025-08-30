@@ -26,8 +26,7 @@ private:
 
     GstElement *pipeline_{nullptr}, *src_{nullptr}, *caps_nvmm_{nullptr}, *conv_{nullptr}, *caps_scaled_{nullptr}, *tee_{nullptr};
     GstElement *q1_{nullptr}, *conv_b1_{nullptr}, *caps_b1_{nullptr}, *shm_{nullptr};
-    GstElement *q2_{nullptr}, *conv2_{nullptr}, *caps_nvmm_b2_{nullptr}, *streammux_{nullptr}, *appsink_{nullptr};
-    GstElement *conv3_{nullptr}, *caps_sys_{nullptr};
+    GstElement *q2_{nullptr}, *conv2_{nullptr}, *caps_nvmm_b2_{nullptr}, *streammux_{nullptr}, *nvinfer_{nullptr}, *conv3_{nullptr}, *caps_sys_{nullptr}, *appsink_{nullptr};
 
     GstBus* bus_{nullptr};
     std::thread bus_thread_;

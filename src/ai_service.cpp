@@ -2,6 +2,7 @@
 
 #include <chrono>
 
+#include <nvdsmeta.h>
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 #include <vision_common/constants.hpp>
@@ -65,7 +66,6 @@ void AiService::detach() {
 }
 
 GstFlowReturn AiService::on_new_sample(GstAppSink* sink, gpointer user_data) {
-    spdlog::info("[AI_SERVICE] on new sample");
     auto* self = static_cast<AiService*>(user_data);
     (void)self;
 
@@ -98,6 +98,21 @@ GstFlowReturn AiService::on_new_sample(GstAppSink* sink, gpointer user_data) {
     // 2) 버퍼 메타
     GstBuffer* buf = gst_sample_get_buffer(sample);
     if (!buf) { gst_sample_unref(sample); return GST_FLOW_ERROR; }
+
+    // 추론 코드
+//    NvDsBatchMeta* batch_meta = gst_buffer_get_nvds_batch_meta(buf);
+//    if (batch_meta) {
+//        // 프레임 메타데이터 리스트를 순회
+//        for (NvDsMetaList* l_frame = batch_meta->frame_meta_list; l_frame != NULL; l_frame = l_frame->next) {
+//            NvDsFrameMeta* frame_meta = (NvDsFrameMeta*)l_frame->data;
+//            // 객체 메타데이터 리스트를 순회
+//            for (NvDsMetaList* l_obj = frame_meta->obj_meta_list; l_obj != NULL; l_obj = l_obj->next) {
+//                NvDsObjectMeta* obj_meta = (NvDsObjectMeta*)l_obj->data;
+//                // 여기서 obj_meta->rect_params (바운딩 박스), obj_meta->class_id 등으로 추론 결과에 접근
+//                spdlog::info("Found object with class_id: {}, confidence: {}", obj_meta->class_id, obj_meta->confidence);
+//            }
+//        }
+//    }
 
     guint nmem = gst_buffer_n_memory(buf);
     GstClockTime pts = GST_BUFFER_PTS(buf);

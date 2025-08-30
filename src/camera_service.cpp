@@ -145,15 +145,14 @@ bool CameraService::create_elements() {
     conv2_ = gst_element_factory_make("nvvideoconvert", "conv2");
     caps_nvmm_b2_ = gst_element_factory_make("capsfilter", "caps_nvmm_b2");
     streammux_ = gst_element_factory_make("nvstreammux", "streammux");
-
+    nvinfer_ = gst_element_factory_make("nvinfer", "primary_gie");
     conv3_ = gst_element_factory_make("nvvideoconvert", "conv3");
     caps_sys_ = gst_element_factory_make("capsfilter", "caps_sys");
     appsink_ = gst_element_factory_make("appsink", "appsink");
 
     if (!pipeline_ || !src_ || !caps_nvmm_ || !conv_ || !caps_scaled_ || !tee_ ||
         !q1_ || !conv_b1_ || !caps_b1_ || !shm_ ||
-        !q2_ || !conv2_ || !caps_nvmm_b2_ || !streammux_ ||
-        !conv3_ || !caps_sys_ || !appsink_) {
+        !q2_ || !conv2_ || !caps_nvmm_b2_ || !streammux_ || !nvinfer_ || !conv3_ || !caps_sys_ || !appsink_) {
         return false;
     }
     return true;
@@ -190,6 +189,9 @@ void CameraService::configure_elements() {
                 "live-source", TRUE,
                 "batched-push-timeout", 33000, NULL);
 
+    g_object_set(nvinfer_,
+                "config-file-path", "/etc/vision-backend/config_infer_primary.txt", NULL);
+
     GstCaps *caps_sys = gst_caps_from_string("video/x-raw,format=RGBA");
     g_object_set(caps_sys_, "caps", caps_sys, NULL);
     gst_caps_unref(caps_sys);
@@ -204,8 +206,8 @@ bool CameraService::link_elements() {
     gst_bin_add_many(GST_BIN(pipeline_),
                      src_, caps_nvmm_, conv_, caps_scaled_, tee_,
                      q1_, conv_b1_, caps_b1_, shm_,
-                     q2_, conv2_, caps_nvmm_b2_, streammux_,
-                     conv3_, caps_sys_, appsink_, NULL);
+                     q2_, conv2_, caps_nvmm_b2_, streammux_, nvinfer_, conv3_, caps_sys_, appsink_, NULL);
+
     bool result = true;
 
     if (!gst_element_link_many(src_, caps_nvmm_, conv_, caps_scaled_, tee_, NULL)) {
@@ -249,7 +251,7 @@ bool CameraService::link_elements() {
     gst_object_unref(caps_src);
     gst_object_unref(mux_sink0);
 
-    if (!gst_element_link_many(streammux_, conv3_, caps_sys_, appsink_, NULL)) {
+    if (!gst_element_link_many(streammux_, nvinfer_, conv3_, caps_sys_, appsink_, NULL)) {
         result = false;
     }
 
