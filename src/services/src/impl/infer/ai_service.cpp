@@ -1,19 +1,18 @@
-#include "ai_service.hpp"
+#include "services/infer/ai_service.hpp"
 
 #include <chrono>
 
 #include <gstnvdsmeta.h>
-#include <nlohmann/json.hpp>
-#include <spdlog/spdlog.h>
-#include <vision_common/constants.hpp>
 #include <gst/video/video.h>
 
-using json = nlohmann::json;
+#include "common/utils/logging.hpp"
+#include "common/utils/json.hpp"
+#include "config/zmq_config.hpp"
 
-AiService::AiService(zmq::context_t& ctx, tbb::concurrent_queue<int>& q, GstElement* appsink_elem)
-    : pub_(ctx, std::string(VisionCommon::AI_RESULTS_ENDPOINT)), job_queue_(q) {
-        attach(appsink_elem);
-    }
+AiService::AiService(GstElement* appsink_elem, PubSocket& pubSocket)
+    : pubSocket_(pubSocket) {
+    attach(appsink_elem);
+}
 
 AiService::~AiService() {
     stop();
@@ -31,17 +30,12 @@ void AiService::stop() {
 }
 
 void AiService::run() {
-    spdlog::info("[AI] Service ready (publishing results)");
+    SPDLOG_SERVICE_INFO("[AI] Service ready (publishing results)");
     int job;
-    json inference_result;
+    AppCommon::json inference_result;
 
     while (running_) {
-//        inference_result = {{"ok", true}};
-//        pub_.publish(std::string(VisionCommon::TOPIC_DETECTIONS), inference_result.dump());
-        if (job_queue_.try_pop(job)) {
-            //spdlog::info("[AI] got job {}", job);
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 
@@ -54,7 +48,7 @@ void AiService::attach(GstElement* appsink_elem) {
     GstAppSinkCallbacks cbs{};
     cbs.new_sample = &AiService::on_new_sample;
     gst_app_sink_set_callbacks(sink_, &cbs, this, nullptr);
-    spdlog::info("[AI_SERVICE] settings complete");
+    SPDLOG_SERVICE_INFO("[AI_SERVICE] settings complete");
 }
 
 void AiService::detach() {
@@ -86,12 +80,12 @@ GstFlowReturn AiService::on_new_sample(GstAppSink* sink, gpointer user_data) {
         int fps_n = 0, fps_d = 1;
         gst_structure_get_fraction(s, "framerate", &fps_n, &fps_d);
 
-//        spdlog::info("[caps] format={} (I420? {}), {}x{}, fps={}/{}",
+//        SPDLOG_SERVICE_INFO("[caps] format={} (I420? {}), {}x{}, fps={}/{}",
 //                      gst_structure_has_field_typed(s, "format", G_TYPE_STRING) ?
 //                        gst_structure_get_string(s, "format") : "unknown",
 //                      (fmt == GST_VIDEO_FORMAT_I420), w, h, fps_n, fps_d);
     } else {
-        spdlog::info("[caps] (no/invalid caps)");
+        SPDLOG_SERVICE_INFO("[caps] (no/invalid caps)");
     }
 
     // 2) 버퍼 메타
@@ -106,25 +100,25 @@ GstFlowReturn AiService::on_new_sample(GstAppSink* sink, gpointer user_data) {
             NvDsFrameMeta* frame_meta = (NvDsFrameMeta*)l_frame->data;
 
             // 이 프레임에 대한 JSON 객체 생성 준비
-            nlohmann::json frame_json;
+            AppCommon::json frame_json;
             frame_json["frame_number"] = frame_meta->frame_num;
             frame_json["timestamp"] = frame_meta->buf_pts;
 
             // 검출된 객체들을 담을 JSON 배열
-            nlohmann::json objects_array = nlohmann::json::array();
+            AppCommon::json objects_array = AppCommon::json::array();
 
             // 객체 메타데이터 리스트를 순회
             for (NvDsMetaList* l_obj = frame_meta->obj_meta_list; l_obj != NULL; l_obj = l_obj->next) {
                 NvDsObjectMeta* obj_meta = (NvDsObjectMeta*)l_obj->data;
 
                 // 객체 하나에 대한 정보를 담을 JSON 객체
-                nlohmann::json object_json;
+                AppCommon::json object_json;
                 object_json["class_id"] = obj_meta->class_id;
                 object_json["label"] = std::string(obj_meta->obj_label);
                 object_json["confidence"] = obj_meta->confidence;
 
                 // 바운딩 박스 좌표 정보를 담을 JSON 객체
-                nlohmann::json box_json;
+                AppCommon::json box_json;
                 box_json["x"] = obj_meta->rect_params.left;
                 box_json["y"] = obj_meta->rect_params.top;
                 box_json["w"] = obj_meta->rect_params.width;
@@ -141,9 +135,9 @@ GstFlowReturn AiService::on_new_sample(GstAppSink* sink, gpointer user_data) {
 
             // 완성된 JSON을 문자열로 변환하여 ZMQ로 전송
             std::string json_string_to_send = frame_json.dump();
-            self->pub_.publish(std::string(VisionCommon::TOPIC_DETECTIONS), json_string_to_send);
+            self->pubSocket_.publish(std::string(AppConfig::TOPIC_DETECTIONS), json_string_to_send);
 
-            //spdlog::info("Sending JSON: {}", json_string_to_send);
+            SPDLOG_SERVICE_DEBUG("Sending JSON: {}", json_string_to_send);
         }
     }
 
@@ -152,16 +146,16 @@ GstFlowReturn AiService::on_new_sample(GstAppSink* sink, gpointer user_data) {
     GstClockTime dts = GST_BUFFER_DTS(buf);
     GstClockTime dur = GST_BUFFER_DURATION(buf);
 
-//    spdlog::info("[buffer] nmem={}, PTS={} ns, DTS={} ns, DUR={} ns, flags=0x{:x}",
+//    SPDLOG_SERVICE_INFO("[buffer] nmem={}, PTS={} ns, DTS={} ns, DUR={} ns, flags=0x{:x}",
 //                  nmem, (guint64)pts, (guint64)dts, (guint64)dur, (unsigned)GST_BUFFER_FLAGS(buf));
 
     // 3) 맵해서 크기/데이터 접근
     GstMapInfo map;
     if (gst_buffer_map(buf, &map, GST_MAP_READ)) {
-//        spdlog::info("[map] size={} bytes, data_ptr={}", (gsize)map.size, (const void*)map.data);
+//        SPDLOG_SERVICE_INFO("[map] size={} bytes, data_ptr={}", (gsize)map.size, (const void*)map.data);
         gst_buffer_unmap(buf, &map);
     } else {
-        spdlog::warn("[map] failed");
+        SPDLOG_SERVICE_WARN("[map] failed");
     }
 
     // 4) 비디오 메타(plane pitch/offset 등)
@@ -169,7 +163,7 @@ GstFlowReturn AiService::on_new_sample(GstAppSink* sink, gpointer user_data) {
         // I420은 3 planes: Y, U, V
         int n_planes = GST_VIDEO_INFO_N_PLANES(&vinfo);
         for (int i = 0; i < n_planes; ++i) {
-//            spdlog::info("[video] plane{}: stride={}, offset={}, plane_height={}",
+//            SPDLOG_SERVICE_INFO("[video] plane{}: stride={}, offset={}, plane_height={}",
 //                          i,
 //                          GST_VIDEO_INFO_PLANE_STRIDE(&vinfo, i),
 //                          GST_VIDEO_INFO_PLANE_OFFSET(&vinfo, i),
