@@ -1,4 +1,4 @@
-#include "ai_service.hpp"
+#include "services/ai_service.hpp"
 
 #include <chrono>
 
@@ -10,8 +10,8 @@
 
 using json = nlohmann::json;
 
-AiService::AiService(zmq::context_t& ctx, tbb::concurrent_queue<int>& q, GstElement* appsink_elem)
-    : pub_(ctx, std::string(VisionCommon::AI_RESULTS_ENDPOINT)), job_queue_(q) {
+AiService::AiService(zmq::context_t& ctx, GstElement* appsink_elem)
+    : pub_(ctx, std::string(VisionCommon::AI_RESULTS_ENDPOINT)) {
         attach(appsink_elem);
     }
 
@@ -36,12 +36,7 @@ void AiService::run() {
     json inference_result;
 
     while (running_) {
-//        inference_result = {{"ok", true}};
-//        pub_.publish(std::string(VisionCommon::TOPIC_DETECTIONS), inference_result.dump());
-        if (job_queue_.try_pop(job)) {
-            //spdlog::info("[AI] got job {}", job);
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 
@@ -143,7 +138,7 @@ GstFlowReturn AiService::on_new_sample(GstAppSink* sink, gpointer user_data) {
             std::string json_string_to_send = frame_json.dump();
             self->pub_.publish(std::string(VisionCommon::TOPIC_DETECTIONS), json_string_to_send);
 
-            //spdlog::info("Sending JSON: {}", json_string_to_send);
+            spdlog::debug("Sending JSON: {}", json_string_to_send);
         }
     }
 

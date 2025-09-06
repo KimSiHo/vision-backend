@@ -3,14 +3,13 @@
 #include <thread>
 #include <atomic>
 
-#include <tbb/concurrent_queue.h>
 #include <vision_common/pub_socket.hpp>
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
 
 class AiService {
 public:
-    AiService(zmq::context_t& ctx, tbb::concurrent_queue<int>& q, GstElement* appsink_elem);
+    AiService(zmq::context_t& ctx, GstElement* appsink_elem);
     ~AiService();
 
     void start();
@@ -29,7 +28,6 @@ private:
     std::atomic<bool> running_{false};
     std::thread processing_thread_;
 
-    tbb::concurrent_queue<int>& job_queue_;
     PubSocket pub_;
     GstAppSink* sink_{nullptr};
 };

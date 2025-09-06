@@ -1,9 +1,22 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-mkdir -p build
-cd build
+PRESET=${1:-nvidia-target}
+BUILD_DIR=build/$PRESET
 
-cmake ../ --log-level=DEBUG
+echo "Using preset: $PRESET, Build directory: $BUILD_DIR"
 
-cmake --build .
+echo "#######################"
+echo "###### CONFIGURE ######"
+echo "#######################"
+cmake --preset "$PRESET"
+
+echo "#######################"
+echo "######## BUILD ########"
+echo "#######################"
+cmake --build --preset "$PRESET" -- -j$(nproc)
+
+echo "#######################"
+echo "####### INSTALL #######"
+echo "#######################"
+#cmake --install "$BUILD_DIR"
