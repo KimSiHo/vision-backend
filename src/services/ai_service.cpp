@@ -36,12 +36,7 @@ void AiService::run() {
     json inference_result;
 
     while (running_) {
-//        inference_result = {{"ok", true}};
-//        pub_.publish(std::string(VisionCommon::TOPIC_DETECTIONS), inference_result.dump());
-        if (job_queue_.try_pop(job)) {
-            //spdlog::info("[AI] got job {}", job);
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 
@@ -143,7 +138,7 @@ GstFlowReturn AiService::on_new_sample(GstAppSink* sink, gpointer user_data) {
             std::string json_string_to_send = frame_json.dump();
             self->pub_.publish(std::string(VisionCommon::TOPIC_DETECTIONS), json_string_to_send);
 
-            //spdlog::info("Sending JSON: {}", json_string_to_send);
+            spdlog::debug("Sending JSON: {}", json_string_to_send);
         }
     }
 

@@ -52,14 +52,12 @@ void ControlService::poll() {
     switch (resolveCommand(cmd)) {
         case CommandType::Start:
             camera_.start();
-//            ai_.start();
             std::this_thread::sleep_for(std::chrono::seconds(1));
             reply = {{"ok", true}, {"msg", "started"}};
             break;
 
         case CommandType::Stop:
             camera_.stop();
-//            ai_.stop();
             reply = {{"ok", true}, {"msg", "stopped"}};
             break;
 
