@@ -6,7 +6,7 @@
 #include <vision_common/constants.hpp>
 #include <vision_common/logging.hpp>
 #include <tbb/concurrent_queue.h>
-#include <spdlog/cfg/env.h>  // load_env_levels
+#include <spdlog/cfg/env.h>
 
 #include "app_config.hpp"
 #include "camera_service.hpp"
