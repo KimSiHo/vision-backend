@@ -1,0 +1,53 @@
+Checks: >
+  readability-identifier-naming
+
+CheckOptions:
+  # ===== 클래스 / 구조체 / 타입 =====
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+
+  # ===== 함수 / 메서드 =====
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.MethodCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+
+  # ===== 변수 / 멤버 =====
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberSuffix
+    value: "_"
+  - key: readability-identifier-naming.StaticMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.StaticMemberSuffix
+    value: "_"
+
+  # ===== 상수 (const / constexpr / enum) =====
+  - key: readability-identifier-naming.ConstantPrefix
+    value: "k"
+  - key: readability-identifier-naming.ConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantPrefix
+    value: "k"
+
+  # ===== 네임스페이스 =====
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+
+  # ===== 매크로 =====
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
