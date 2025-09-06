@@ -1,0 +1,27 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "nvidia-target",
+      "displayName": "Native Build on NVIDIA Target (ARM)",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/nvidia-target",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "/opt/vision-backend",
+        "CMAKE_PREFIX_PATH": "/opt/vision-common/lib/cmake"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "nvidia-target",
+      "configurePreset": "nvidia-target"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# 수정/추가된 C/C++ 파일만 추출
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(cpp|cc|c|hpp|h)$')
+
+[ -z "$files" ] && exit 0
+
+echo "🔍 Running clang-format check..."
+
+unformatted=$(clang-format --dry-run --Werror $files 2>&1)
+
+if [ $? -ne 0 ]; then
+  echo "❌ Some files are not formatted properly:"
+  echo "$unformatted"
+  echo
+  echo "➡  Run 'clang-format -i <file>' or 'git clang-format' to fix formatting."
+  exit 1
+fi
+
+echo "✅ All files are properly formatted."

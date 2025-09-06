@@ -1,0 +1,6 @@
+BasedOnStyle: Google
+Standard: c++17
+
+ColumnLimit: 120
+AccessModifierOffset: -2
+IndentWidth: 2
